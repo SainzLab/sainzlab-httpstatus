@@ -81,8 +81,7 @@ function handleRefresh() {
     <!-- Header Navigation with Sainzlab Identity (Entrance: 1st) -->
     <header class="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 md:px-10 flex items-center justify-between border-b border-border/40 animate-fade-in-up delay-100 fill-mode-both">
       <a
-        href="/"
-        @click.prevent="navigate('/')"
+        href="https://sainzlab.my.id"
         class="flex items-center gap-3 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sainzlab rounded-lg"
       >
         <!-- Light mode logo (Rich amber icon + Dark charcoal typography) -->
