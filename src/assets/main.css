@@ -85,3 +85,11 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* View Transitions API (Animated Theme Toggler) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+

@@ -85,6 +85,11 @@ export function isValidStatusCode(code: string): code is HttpStatusCode {
   return Object.prototype.hasOwnProperty.call(statusData, code)
 }
 
+export function isMaintenancePath(pathname: string): boolean {
+  const clean = pathname.replace(/^\/+|\/+$/g, "").toLowerCase()
+  return clean === "maintenance"
+}
+
 export function getStatusFromPath(pathname: string): HttpStatusItem {
   const codeParam = pathname.replace(/^\/+|\/+$/g, "")
 

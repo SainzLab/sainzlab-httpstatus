@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/logo.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404</title>
+    <title>-</title>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          // Default selalu warna putih (light mode) kecuali user secara eksplisit memilih 'dark'
+          if (saved === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -2,16 +2,30 @@
 import { computed, onMounted, onUnmounted, ref, watchEffect } from "vue"
 import NotFound from "@/components/ui/not-found/NotFound.vue"
 import Illustration from "@/components/ui/not-found/Illustration.vue"
-import { getStatusFromPath, type HttpStatusItem } from "@/components/ui/not-found/statusData"
+import { Empty5 } from "@/components/ui/empty5"
+import { getStatusFromPath, isMaintenancePath, type HttpStatusItem } from "@/components/ui/not-found/statusData"
 import sainzlabLogo from "@/assets/sainzlab-logo.png"
 import sainzlabLogoDark from "@/assets/sainzlab-logo-dark.png"
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 
 const currentPath = ref<string>(
   typeof window !== "undefined" ? window.location.pathname : "/"
 )
 
+const statusFeedbackVisible = ref<boolean>(false)
+let feedbackTimeout: ReturnType<typeof setTimeout> | null = null
+
 function handlePopState() {
   currentPath.value = window.location.pathname
+  statusFeedbackVisible.value = false
+}
+
+function navigate(path: string) {
+  if (typeof window !== "undefined") {
+    window.history.pushState({}, "", path)
+    currentPath.value = window.location.pathname
+    statusFeedbackVisible.value = false
+  }
 }
 
 onMounted(() => {
@@ -20,7 +34,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("popstate", handlePopState)
+  if (feedbackTimeout) clearTimeout(feedbackTimeout)
 })
+
+const isMaintenance = computed<boolean>(() =>
+  isMaintenancePath(currentPath.value)
+)
 
 const currentStatus = computed<HttpStatusItem>(() =>
   getStatusFromPath(currentPath.value)
@@ -28,9 +47,27 @@ const currentStatus = computed<HttpStatusItem>(() =>
 
 watchEffect(() => {
   if (typeof document !== "undefined") {
-    document.title = `${currentStatus.value.code} — ${currentStatus.value.title} | Sainzlab`
+    if (isMaintenance.value) {
+      document.title = "Under Maintenance | Sainzlab"
+    } else {
+      document.title = `${currentStatus.value.code} — ${currentStatus.value.title} | Sainzlab`
+    }
   }
 })
+
+function handleCheckStatus() {
+  statusFeedbackVisible.value = true
+  if (feedbackTimeout) clearTimeout(feedbackTimeout)
+  feedbackTimeout = setTimeout(() => {
+    statusFeedbackVisible.value = false
+  }, 6000)
+}
+
+function handleRefresh() {
+  if (typeof window !== "undefined") {
+    window.location.reload()
+  }
+}
 </script>
 
 <template>
@@ -43,7 +80,11 @@ watchEffect(() => {
 
     <!-- Header Navigation with Sainzlab Identity (Entrance: 1st) -->
     <header class="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 md:px-10 flex items-center justify-between border-b border-border/40 animate-fade-in-up delay-100 fill-mode-both">
-      <a href="/" class="flex items-center gap-3 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sainzlab rounded-lg">
+      <a
+        href="/"
+        @click.prevent="navigate('/')"
+        class="flex items-center gap-3 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sainzlab rounded-lg"
+      >
         <!-- Light mode logo (Rich amber icon + Dark charcoal typography) -->
         <img
           :src="sainzlabLogo"
@@ -57,11 +98,48 @@ watchEffect(() => {
           class="h-7 sm:h-8 w-auto object-contain hidden dark:block"
         />
       </a>
+
+      <!-- Animated Theme Toggler -->
+      <div class="flex items-center">
+        <AnimatedThemeToggler />
+      </div>
     </header>
 
     <!-- Main Content Area -->
     <main class="relative z-10 flex-1 flex flex-col justify-center items-center px-6 py-12 md:py-20 w-full">
-      <div :key="currentStatus.code" class="relative max-w-5xl mx-auto w-full">
+      <!-- Maintenance View (Triggered by /maintenance) -->
+      <div v-if="isMaintenance" class="relative max-w-5xl mx-auto w-full">
+        <Empty5
+          @check-status="handleCheckStatus"
+          @refresh="handleRefresh"
+        />
+
+        <!-- Status Check Feedback Banner -->
+        <transition
+          enter-active-class="transition duration-300 ease-out"
+          enter-from-class="opacity-0 -translate-y-2 scale-95"
+          enter-to-class="opacity-100 translate-y-0 scale-100"
+          leave-active-class="transition duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0 scale-100"
+          leave-to-class="opacity-0 -translate-y-2 scale-95"
+        >
+          <div
+            v-if="statusFeedbackVisible"
+            class="mt-6 max-w-md mx-auto p-4 rounded-xl border border-border/80 bg-card/90 backdrop-blur-md shadow-md text-center animate-fade-in-up"
+          >
+            <div class="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-sm">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Status: Scheduled Maintenance Active</span>
+            </div>
+            <p class="mt-1 text-xs text-muted-foreground">
+              Systems are undergoing planned optimizations. Services will resume shortly without data interruption.
+            </p>
+          </div>
+        </transition>
+      </div>
+
+      <!-- HTTP Status Code View (e.g. 404, 500, 503, etc.) -->
+      <div v-else :key="currentStatus.code" class="relative max-w-5xl mx-auto w-full">
         <!-- Giant Status Code Watermark (Entrance: 2nd + Continuous Floating/Breathing) -->
         <div class="absolute inset-0 w-full h-[52vh] pointer-events-none select-none animate-fade-in-up delay-200 fill-mode-both">
           <Illustration
