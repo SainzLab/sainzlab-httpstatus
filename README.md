@@ -40,4 +40,8 @@ npm run dev
 ```sh
 npm run build
 ```
-# sainzlab-httpstatus
+
+## Documentation
+
+- [Dokumentasi Path & Routing](./PATHS.md) — Penjelasan lengkap mengenai URL routing paths (`/maintenance`, `/404`, `/500`, dll) dan struktur file proyek.
+
